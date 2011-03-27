@@ -1,0 +1,11 @@
+classic therapist.py chat bot
+
+a cheezy little Eliza knock-off by Joe Strout <joe@strout.net>
+with some updates by Jeff Epler <jepler@inetnebr.com>
+last revised: 3/17/97
+
+updated to run on Python 2.6.x or later
+- replaced old deprecaetd libs (re, random)
+- removed reg-exp escape symbols
+by Joseph Chereshnovsky <joseph.chereshnovsky@gmail.com>
+at 27/03/2011
