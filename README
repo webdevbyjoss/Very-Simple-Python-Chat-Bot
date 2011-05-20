@@ -1,11 +1,20 @@
-classic therapist.py chat bot
+classic therapist.py chat bot on steroids
 
 a cheezy little Eliza knock-off by Joe Strout <joe@strout.net>
 with some updates by Jeff Epler <jepler@inetnebr.com>
-last revised: 3/17/97
+original code last revised: 3/17/97
 
-updated to run on Python 2.6.x or later
+
+- updated to run on Python 2.6.x or later
 - replaced old deprecaetd libs (re, random)
 - removed reg-exp escape symbols
 by Joseph Chereshnovsky <joseph.chereshnovsky@gmail.com>
 at 27/03/2011
+   
+- added voice support using "festival" text-to-speach software
+  to add voice support just install "festival" with the following command:
+  Ubuntu 10.10+: # apt-get install festival
+- replaced the usage of old deprecated fucntion
+- revised code to use new regexps interface
+by Joseph Chereshnovsky <joseph.chereshnovsky@gmail.com>
+at 15/04/2011
