@@ -12,30 +12,41 @@
 #   by Joseph Chereshnovsky <joseph.chereshnovsky@gmail.com>
 #   at 27/03/2011
 #   
-#	- added voice support using "festival" text-to-speach software
+#   - added voice support using "festival" text-to-speach software
 #	  to add voice support just install "festival" with the following command:
 #	  Ubuntu: # apt-get install festival
 #   - replaced the usage of old deprecated fucntion
 #   - revised code to use new regexps interface
 #	at 15/04/2011
 #   
+#   - moved Text-to-Speach functionality to separate thread 
+#     to get a better responce time
+#      at 19/08/2011
 #----------------------------------------------------------------------
 
 import string
 import re
 import random
 import os
-import subprocess
+import Queue
+from threading import Thread
 
 #
+# just a small function that calls CLI command
 #
+def callcli(command):
+    os.system(command)
+
+
 #
+# this function can print the string into console and also use festival for Text-to-Speach
 #
 def printaudio(str):
-	print str
-	command = 'echo "%s" | festival --tts' % str
-	#subprocess.call(command)
-	os.system(command)
+    print str
+    command = 'echo "%s" | festival --tts' % str
+    #subprocess.call(command)
+    thread = Thread(target=callcli, args=(command,))
+    thread.start()
 
 #----------------------------------------------------------------------
 # translate: take a string, replace any words found in dict.keys()
