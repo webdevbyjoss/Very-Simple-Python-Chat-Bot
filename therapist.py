@@ -22,6 +22,12 @@
 #   - moved Text-to-Speach functionality to separate thread 
 #     to get a better responce time
 #      at 19/08/2011
+#
+#   - added some speech recognision via CLI client for Google STT service
+#   at 8/12/2011 
+#
+#   - moved CLI script to Python
+#
 #----------------------------------------------------------------------
 
 import string
@@ -30,6 +36,20 @@ import random
 import os
 import Queue
 from threading import Thread
+# we need following libraries for file upload, see: http://atlee.ca/software/poster/
+# apt-get install python-poster
+# apt-get install python-m2crypto
+#from poster.encode import multipart_encode
+#from poster.streaminghttp import register_openers
+#import urllib2
+#register_openers()
+# crap, lets try to use curl
+import pycurl
+import StringIO
+
+# google serive returns a JSON responce
+import json
+
 
 #
 # just a small function that calls CLI command
@@ -37,13 +57,70 @@ from threading import Thread
 def callcli(command):
     os.system(command)
 
+#
+# this call will run a Text-To-Speach program and return the text
+#
+def readvoice():
+    # use "rec" program via CLI interface to record a phrase from CLI
+    # print "speak now <=!!=>"
+    os.popen("rec -q -c 1 -r 16000 /tmp/current.wav silence 1 0.3 3% 1 0.3 3%")
+    
+    # convert raw WAV file into FLAC as Google STT service requires flac
+    printaudio("ok")
+    os.popen("flac -f -s /tmp/current.wav -o /tmp/current.flac")
+    
+    # upload file to Google STT
+    # print "recognizing via Google Speeach-To-Text Service..."
+    
+    c = pycurl.Curl()
+    c.setopt(c.POST, 1)
+    c.setopt(c.URL, "https://www.google.com/speech-api/v1/recognize?xjerr=1&client=chromium&lang=en-US")
+    c.setopt(c.HTTPPOST, [("file", (c.FORM_FILE, "/tmp/current.flac"))])
+    #c.setopt(c.VERBOSE, 1)
+    c.setopt(c.HTTPHEADER, ['Content-Type: audio/x-flac; rate=16000'])
+    # write output here
+    s = StringIO.StringIO()
+    c.setopt(pycurl.WRITEFUNCTION, s.write)
+    
+    # perform request
+    c.perform()
+    c.close()
+    responce = s.getvalue();
+    
+    #datagen, headers = multipart_encode({"file": open("", "rb")}, "audio/x-flac")
+    #headers['Content-Type'] = 'audio/x-flac; rate=16000'
 
+    #f = urllib2.urlopen(request)
+    #responce = f.read()
+    #f.close();
+    data = json.loads(responce)
+    
+    #
+    if (len(data['hypotheses']) > 0):
+        hypothese = data['hypotheses'].pop()
+    else:
+        return ""
+    
+    if 'utterance' in hypothese:
+        output = hypothese['utterance']
+    else:
+        output = ''
+    
+    print " >> " + output
+    return output
+    # f = os.popen("php -e ./textocmd.php")
+    #output = ""
+    #for i in f.readlines():
+    #    print i
+    #    output += i
+    #return output
 #
 # this function can print the string into console and also use festival for Text-to-Speach
 #
 def printaudio(str):
-    print str
-    command = 'echo "%s" | festival --tts' % str
+    print " <  " + str
+    command = 'echo "%s" | festival --tts > /dev/null 2>&1' % str
+    #callcli(command)
     #subprocess.call(command)
     thread = Thread(target=callcli, args=(command,))
     thread.start()
@@ -54,7 +131,7 @@ def printaudio(str):
 #----------------------------------------------------------------------
 def translate(str,dict):
 	words = string.split(string.lower(str))
-	keys = dict.keys();
+	keys = dict.keys()
 	for i in range(0,len(words)):
 		if words[i] in keys:
 			words[i] = dict[words[i]]
@@ -326,16 +403,15 @@ gPats = [
 gKeys = map(lambda x:re.compile(x[0]),gPats)
 gValues = map(lambda x:x[1],gPats)
 
-print "Therapist\n---------"
-print "Talk to the program by typing in plain English, using normal upper-"
-print 'and lower-case letters and punctuation.  Enter "quit" when done.'
+print "Therapist Voice\n---------"
+print "Talk to the program in simple English, Say 'quit' when done."
 print '='*72
-printaudio("Hello. How are you feeling today?")
+printaudio("Hello, how are you feeling today?")
 s = ""
 while s != "quit":
-	try: s = raw_input("> ")
+	try: s = readvoice()
 	except EOFError:
 		s = "quit"
 		print s
-	while s[-1] in "!.": s = s[:-1]
+	#while s[-1] in "!.": s = s[:-1]
 	printaudio(respond(s,gKeys,gValues))
